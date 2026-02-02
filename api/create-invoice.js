@@ -1,6 +1,5 @@
-// Vercel Serverless Function - /api/create-invoice.js
+// Works as both Vercel Serverless Function AND standalone Render server
 const Stripe = require('stripe');
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // CORS headers for embedded form
@@ -10,7 +9,8 @@ const headers = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-module.exports = async (req, res) => {
+// Handler function (used by both Vercel and Express)
+const handler = async (req, res) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     res.status(200).set(headers).end();
@@ -82,3 +82,32 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+// Export for Vercel
+module.exports = handler;
+
+// Run as standalone server for Render
+if (require.main === module) {
+  const express = require('express');
+  const cors = require('cors');
+
+  const app = express();
+  app.use(cors());
+  app.use(express.json());
+
+  // Health check
+  app.get('/', (req, res) => {
+    res.json({ status: 'ok', service: 'stripe-donation-api' });
+  });
+
+  // Main endpoint
+  app.post('/api/create-invoice', handler);
+  app.options('/api/create-invoice', (req, res) => {
+    res.set(headers).status(200).end();
+  });
+
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}

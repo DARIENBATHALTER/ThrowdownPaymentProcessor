@@ -224,6 +224,28 @@
   const errorMessage = document.getElementById('errorMessage');
   const quickAmountBtns = document.querySelectorAll('.quick-amount-btn');
 
+  // ============================================
+  // SOFTR INTEGRATION - Auto-populate email
+  // ============================================
+  function populateEmailFromSoftr() {
+    // Check if user is logged in via Softr
+    if (window.logged_in_user && window.logged_in_user.email) {
+      emailInput.value = window.logged_in_user.email;
+      emailInput.readOnly = true;
+      emailInput.style.backgroundColor = '#f5f5f5';
+      emailInput.style.cursor = 'not-allowed';
+    }
+  }
+
+  // Try immediately
+  populateEmailFromSoftr();
+
+  // Also listen for Softr's user loaded event (in case it loads async)
+  window.addEventListener('softr:user-loaded', populateEmailFromSoftr);
+
+  // Fallback: check again after a short delay
+  setTimeout(populateEmailFromSoftr, 500);
+
   // Quick amount buttons
   quickAmountBtns.forEach(btn => {
     btn.addEventListener('click', () => {
